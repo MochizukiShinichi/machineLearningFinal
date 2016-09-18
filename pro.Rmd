@@ -51,16 +51,34 @@ training <- training[,-(1:7)]
 2. As a physics student, I have the intuition that only a few variables would account for the most variance, especially accelerations. Therefore I speculate that **dimension reduction** would be important to greatly simplify the model.
 
 Taking into these considerations, I choose to use **k-nearest neibougher** classification algorithm with **principle component analysis** as the preprocessing method.
+
+### Cross Validation
+Before proceeding, I first use cross validation to estimate the out of sample error.
+```{r model.fitting.chunk2, cache = cachemodels}
+ind <- createDataPartition(training$classe, p=0.95, list= FALSE)
+training_train <- training[ind,]
+training_test <- training[-ind,]
+model_naive <- train(factor(classe)~.,training_train,method='knn',preProcess=c('center','scale','pca'))
+confusionMatrix(predict(model_naive,training_test),training_test$classe)$overall['Accuracy']
+```
+Results have passed the cross validation, I can now build models based on the whole training set.
+
+### Final Model
 ```{r model.fitting.chunk1, cache = cachemodels}
-model_naive <- train(factor(classe)~.,training,method='knn',preProcess=c('center','scale','pca'))
-confusionMatrix(predict(model_naive,training),training$classe)$overall['Accuracy']
+model<- train(factor(classe)~.,training,method='knn',preProcess=c('center','scale','pca'))
+confusionMatrix(predict(model,training),training$classe)$overall['Accuracy']
 ```
 The in sample accuracy is good enough and I would expect the out of sample error acceptable.
+
+### Other Models I have tried
+1. glm (low accuracy)
+2. random forests (time inefficient)
+3. svm (a little less time efficient, little improvement)
 
 ## Result
 The model yields the final prediction:
 ```{r}
-predict(model_naive,testing)
+predict(model,testing)
 ```
 
 

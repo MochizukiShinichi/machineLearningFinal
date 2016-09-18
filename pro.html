@@ -165,17 +165,40 @@ training &lt;- training[,-(1:7)]</code></pre>
 <li><p>As a physics student, I have the intuition that only a few variables would account for the most variance, especially accelerations. Therefore I speculate that <strong>dimension reduction</strong> would be important to greatly simplify the model.</p></li>
 </ol>
 <p>Taking into these considerations, I choose to use <strong>k-nearest neibougher</strong> classification algorithm with <strong>principle component analysis</strong> as the preprocessing method.</p>
-<pre class="r"><code>model_naive &lt;- train(factor(classe)~.,training,method='knn',preProcess=c('center','scale','pca'))
-confusionMatrix(predict(model_naive,training),training$classe)$overall['Accuracy']</code></pre>
+<div id="cross-validation" class="section level3">
+<h3>Cross Validation</h3>
+<p>Before proceeding, I first use cross validation to estimate the out of sample error.</p>
+<pre class="r"><code>ind &lt;- createDataPartition(training$classe, p=0.95, list= FALSE)
+training_train &lt;- training[ind,]
+training_test &lt;- training[-ind,]
+model_naive &lt;- train(factor(classe)~.,training_train,method='knn',preProcess=c('center','scale','pca'))
+confusionMatrix(predict(model_naive,training_test),training_test$classe)$overall['Accuracy']</code></pre>
+<pre><code>##  Accuracy 
+## 0.9703779</code></pre>
+<p>Results have passed the cross validation, I can now build models based on the whole training set.</p>
+</div>
+<div id="final-model" class="section level3">
+<h3>Final Model</h3>
+<pre class="r"><code>model&lt;- train(factor(classe)~.,training,method='knn',preProcess=c('center','scale','pca'))
+confusionMatrix(predict(model,training),training$classe)$overall['Accuracy']</code></pre>
 <pre><code>##  Accuracy 
 ## 0.9896545</code></pre>
 <p>The in sample accuracy is good enough and I would expect the out of sample error acceptable.</p>
 </div>
+<div id="other-models-i-have-tried" class="section level3">
+<h3>Other Models I have tried</h3>
+<ol style="list-style-type: decimal">
+<li>glm (low accuracy)</li>
+<li>random forests (time inefficient)</li>
+<li>svm (a little less time efficient, little improvement)</li>
+</ol>
+</div>
+</div>
 <div id="result" class="section level2">
 <h2>Result</h2>
 <p>The model yields the final prediction:</p>
-<pre class="r"><code>predict(model_naive,testing)</code></pre>
-<pre><code>##  [1] B A A A A E D B A A B C B A E E A B B B
+<pre class="r"><code>predict(model,testing)</code></pre>
+<pre><code>##  [1] B A C A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E</code></pre>
 <p>```</p>
 </div>
